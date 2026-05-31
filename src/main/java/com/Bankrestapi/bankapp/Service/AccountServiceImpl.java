@@ -3,10 +3,7 @@ package com.Bankrestapi.bankapp.Service;
 import java.util.List;
 import java.util.Optional;
 
-import javax.management.RuntimeErrorException;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.parsing.PassThroughSourceExtractor;
 import org.springframework.stereotype.Service;
 
 import com.Bankrestapi.bankapp.entity.Account;
@@ -81,8 +78,11 @@ public class AccountServiceImpl implements AccountService {
 
 	@Override
 	public void closeAccount(Long accountNumber) {
-		// TODO Auto-generated method stub
-		
+		if(!repo.existsById(accountNumber))
+		{
+			throw new RuntimeException("Account is not found");
+		}
+		repo.deleteById(accountNumber);
 	}
 
 }
