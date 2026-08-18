@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,24 +10,22 @@ const api = axios.create({
 });
 
 // Account APIs
-export const getAccounts = () => api.get('/accounts');
-export const getAccountById = (id) => api.get(`/accounts/${id}`);
-export const createAccount = (data) => api.post('/accounts', data);
-export const updateAccount = (id, data) => api.put(`/accounts/${id}`, data);
-export const deleteAccount = (id) => api.delete(`/accounts/${id}`);
+export const getAccounts = () => api.get('/account/getallaccounts');
+export const getAccountById = (id) => api.get(`/account/${id}`);
+export const createAccount = (data) => api.post('/account/create', data);
+export const updateAccount = (id, data) => api.put(`/account/${id}`, data);
+export const deleteAccount = (id) => api.delete(`/account/close/${id}`);
 
-// Transaction APIs
-export const getTransactions = () => api.get('/transactions');
-export const getTransactionById = (id) => api.get(`/transactions/${id}`);
-export const createTransaction = (data) => api.post('/transactions', data);
-export const updateTransaction = (id, data) => api.put(`/transactions/${id}`, data);
-export const deleteTransaction = (id) => api.delete(`/transactions/${id}`);
+// Transaction APIs (deposit/withdraw)
+export const getTransactions = () => api.get('/account/getallaccounts');
+export const getTransactionById = (id) => api.get(`/account/${id}`);
+export const depositAmount = (accountNumber, amount) => api.put(`/account/deposit/${accountNumber}/${amount}`);
+export const withdrawAmount = (accountNumber, amount) => api.put(`/account/withdraw/${accountNumber}/${amount}`);
 
 // Interest Accrual APIs
-export const getInterestAccruals = () => api.get('/interest-accruals');
-export const getInterestAccrualById = (id) => api.get(`/interest-accruals/${id}`);
-export const createInterestAccrual = (data) => api.post('/interest-accruals', data);
-export const updateInterestAccrual = (id, data) => api.put(`/interest-accruals/${id}`, data);
-export const deleteInterestAccrual = (id) => api.delete(`/interest-accruals/${id}`);
+export const getInterestAccruals = () => api.get('/interest/history');
+export const getInterestAccrualById = (accountNumber) => api.get(`/interest/history/${accountNumber}`);
+export const createInterestAccrual = (accountNumber, interestRate) => api.post(`/interest/accrue/${accountNumber}/${interestRate}`);
+export const getTotalInterest = (accountNumber) => api.get(`/interest/total/${accountNumber}`);
 
 export default api;
