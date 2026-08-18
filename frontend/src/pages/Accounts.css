@@ -1,0 +1,12 @@
+.accounts-container {
+  max-width: 1000px;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}

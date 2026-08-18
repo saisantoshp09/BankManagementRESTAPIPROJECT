@@ -1,0 +1,8 @@
+.transactions-container {
+  max-width: 1200px;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+}
