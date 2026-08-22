@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Modal, Form, Alert } from 'react-bootstrap';
-import { getInterestAccruals, createInterestAccrual, updateInterestAccrual, deleteInterestAccrual, getAccounts } from '../services/api';
+import { getAccounts, createInterestAccrual, getTotalInterest } from '../services/api';
 import './InterestAccruals.css';
 
 function InterestAccruals() {
-  const [accruals, setAccruals] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [interestData, setInterestData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     account_number: '',
     interest_rate: '',
-    principal_amount: '',
-    accrual_period: '',
   });
 
   useEffect(() => {
@@ -24,12 +21,19 @@ function InterestAccruals() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [accRes, acctsRes] = await Promise.all([
-        getInterestAccruals(),
-        getAccounts()
-      ]);
-      setAccruals(accRes.data);
-      setAccounts(acctsRes.data);
+      const res = await getAccounts();
+      setAccounts(res.data);
+      
+      const interestMap = {};
+      for (const account of res.data) {
+        try {
+          const totalRes = await getTotalInterest(account.account_number);
+          interestMap[account.account_number] = totalRes.data || 0;
+        } catch (e) {
+          interestMap[account.account_number] = 0;
+        }
+      }
+      setInterestData(interestMap);
       setError(null);
     } catch (err) {
       setError('Failed to load data. ' + (err.response?.data?.message || err.message));
@@ -39,30 +43,16 @@ function InterestAccruals() {
     }
   };
 
-  const handleShowModal = (accrual = null) => {
-    if (accrual) {
-      setEditingId(accrual.accrual_id);
-      setFormData({
-        account_number: accrual.account.account_number,
-        interest_rate: accrual.interest_rate,
-        principal_amount: accrual.principal_amount,
-        accrual_period: accrual.accrual_period,
-      });
-    } else {
-      setEditingId(null);
-      setFormData({
-        account_number: '',
-        interest_rate: '',
-        principal_amount: '',
-        accrual_period: 'MONTHLY',
-      });
-    }
+  const handleShowModal = () => {
+    setFormData({
+      account_number: '',
+      interest_rate: '',
+    });
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setEditingId(null);
   };
 
   const handleInputChange = (e) => {
@@ -76,88 +66,75 @@ function InterestAccruals() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editingId) {
-        await updateInterestAccrual(editingId, formData);
-      } else {
-        await createInterestAccrual(formData);
+      const { account_number, interest_rate } = formData;
+      
+      if (!account_number || !interest_rate) {
+        setError('Please fill in all fields');
+        return;
       }
+
+      await createInterestAccrual(account_number, interest_rate);
       handleCloseModal();
       fetchData();
+      setError(null);
     } catch (err) {
-      setError('Failed to save interest accrual. ' + (err.response?.data?.message || err.message));
-      console.error('Error saving accrual:', err);
+      setError('Failed to accrue interest. ' + (err.response?.data?.message || err.message));
+      console.error('Error accruing interest:', err);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this interest accrual?')) {
-      try {
-        await deleteInterestAccrual(id);
-        fetchData();
-      } catch (err) {
-        setError('Failed to delete accrual. ' + (err.response?.data?.message || err.message));
-        console.error('Error deleting accrual:', err);
-      }
-    }
-  };
-
-  if (loading) return <Container className="mt-5"><p>Loading interest accruals...</p></Container>;
+  if (loading) {
+    return <Container className="mt-5"><Alert variant="info">Loading accounts...</Alert></Container>;
+  }
 
   return (
-    <Container className="mt-5 accruals-container">
-      <h1 className="page-title">Interest Accruals Management</h1>
-      
+    <Container className="mt-5">
+      <h2>📈 Interest Accruals</h2>
       {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
-      
+
       <Button 
         variant="primary" 
         className="mb-3"
-        onClick={() => handleShowModal()}
+        onClick={handleShowModal}
       >
-        + Add New Interest Accrual
+        ➕ Calculate Interest
       </Button>
 
-      {accruals.length === 0 ? (
-        <Alert variant="info">No interest accruals found.</Alert>
+      {accounts.length === 0 ? (
+        <Alert variant="info">No accounts found. Please create an account first.</Alert>
       ) : (
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Accrual ID</th>
-              <th>Account Number</th>
-              <th>Interest Rate (%)</th>
-              <th>Principal Amount</th>
-              <th>Interest Earned</th>
-              <th>Period</th>
-              <th>Date</th>
+              <th>Account #</th>
+              <th>Holder Name</th>
+              <th>Balance</th>
+              <th>Total Interest Earned</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {accruals.map(accrual => (
-              <tr key={accrual.accrual_id}>
-                <td>{accrual.accrual_id}</td>
-                <td>{accrual.account.account_number}</td>
-                <td>{accrual.interest_rate?.toFixed(2)}%</td>
-                <td>${accrual.principal_amount?.toFixed(2)}</td>
-                <td>${accrual.interest_earned?.toFixed(2)}</td>
-                <td>{accrual.accrual_period}</td>
-                <td>{new Date(accrual.accrual_date).toLocaleDateString()}</td>
+            {accounts.map(acc => (
+              <tr key={acc.account_number}>
+                <td>{acc.account_number}</td>
+                <td>{acc.account_holder_name}</td>
+                <td>${acc.account_balance?.toFixed(2)}</td>
+                <td className="text-success fw-bold">
+                  ${(interestData[acc.account_number] || 0).toFixed(2)}
+                </td>
                 <td>
                   <Button
-                    variant="warning"
+                    variant="info"
                     size="sm"
-                    className="me-2"
-                    onClick={() => handleShowModal(accrual)}
+                    onClick={() => {
+                      setFormData({
+                        account_number: acc.account_number,
+                        interest_rate: '',
+                      });
+                      setShowModal(true);
+                    }}
                   >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDelete(accrual.accrual_id)}
-                  >
-                    Delete
+                    Accrue Interest
                   </Button>
                 </td>
               </tr>
@@ -168,7 +145,7 @@ function InterestAccruals() {
 
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
-          <Modal.Title>{editingId ? 'Edit Interest Accrual' : 'Add New Interest Accrual'}</Modal.Title>
+          <Modal.Title>📊 Calculate Interest</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
@@ -194,37 +171,14 @@ function InterestAccruals() {
                 type="number"
                 step="0.01"
                 name="interest_rate"
+                placeholder="e.g., 5.5"
                 value={formData.interest_rate}
                 onChange={handleInputChange}
                 required
               />
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Principal Amount</Form.Label>
-              <Form.Control
-                type="number"
-                step="0.01"
-                name="principal_amount"
-                value={formData.principal_amount}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Accrual Period</Form.Label>
-              <Form.Select
-                name="accrual_period"
-                value={formData.accrual_period}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="MONTHLY">Monthly</option>
-                <option value="QUARTERLY">Quarterly</option>
-                <option value="ANNUALLY">Annually</option>
-              </Form.Select>
-            </Form.Group>
             <Button variant="primary" type="submit" className="w-100">
-              {editingId ? 'Update Accrual' : 'Create Accrual'}
+              Calculate & Accrue Interest
             </Button>
           </Form>
         </Modal.Body>
