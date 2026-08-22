@@ -9,12 +9,14 @@ public class CorsConfig implements WebMvcConfigurer {
     
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
+        registry.addMapping("/**")
                 .allowedOrigins(
                     "http://localhost:3000",          // Local React development
-                    "http://localhost:8080",           // Local backend
-                    "https://localhost",               // HTTPS localhost
+                    "http://localhost:8081",          // Local backend port 8081
+                    "http://localhost:8080",          // Local backend port 8080
+                    "https://localhost",              // HTTPS localhost
                     "http://127.0.0.1:3000",
+                    "http://127.0.0.1:8081",
                     "http://127.0.0.1:8080"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
