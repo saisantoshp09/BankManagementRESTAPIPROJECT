@@ -8,6 +8,7 @@ function Transactions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
   const [formData, setFormData] = useState({
     account_number: '',
     transaction_type: 'DEPOSIT',
@@ -21,11 +22,17 @@ function Transactions() {
   const fetchAccounts = async () => {
     try {
       setLoading(true);
+
       const res = await getAccounts();
+
       setAccounts(res.data);
       setError(null);
     } catch (err) {
-      setError('Failed to load accounts. ' + (err.response?.data?.message || err.message));
+      setError(
+        'Failed to load accounts. ' +
+        (err.response?.data?.message || err.message)
+      );
+
       console.error('Error fetching accounts:', err);
     } finally {
       setLoading(false);
@@ -38,6 +45,7 @@ function Transactions() {
       transaction_type: 'DEPOSIT',
       amount: '',
     });
+
     setShowModal(true);
   };
 
@@ -47,17 +55,23 @@ function Transactions() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const { account_number, transaction_type, amount } = formData;
-      
+      const {
+        account_number,
+        transaction_type,
+        amount,
+      } = formData;
+
       if (!account_number || !amount) {
         setError('Please fill in all fields');
         return;
@@ -68,39 +82,48 @@ function Transactions() {
       } else {
         await withdrawAmount(account_number, amount);
       }
-      
+
       handleCloseModal();
-      fetchAccounts();
+
+      await fetchAccounts();
+
       setError(null);
     } catch (err) {
-      setError('Failed to process transaction. ' + (err.response?.data?.message || err.message));
+      setError(
+        'Failed to process transaction. ' +
+        (err.response?.data?.message || err.message)
+      );
+
       console.error('Error processing transaction:', err);
-    }
-  };
-    }
-  };
-
-  if (loading) return <Container className="mt-5"><p>Loading transactions...</p></Container>;
-
-  return (
-    <Container className="mt-5 transactions-container">
-      <h1 className="page-title">Transactions Management</h1>
-      
-      {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
     }
   };
 
   if (loading) {
-    return <Container className="mt-5"><Alert variant="info">Loading accounts...</Alert></Container>;
+    return (
+      <Container className="mt-5">
+        <Alert variant="info">
+          Loading accounts...
+        </Alert>
+      </Container>
+    );
   }
 
   return (
     <Container className="mt-5">
       <h2>💳 Transactions</h2>
-      {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
 
-      <Button 
-        variant="primary" 
+      {error && (
+        <Alert
+          variant="danger"
+          onClose={() => setError(null)}
+          dismissible
+        >
+          {error}
+        </Alert>
+      )}
+
+      <Button
+        variant="primary"
         className="mb-3"
         onClick={handleShowModal}
       >
@@ -108,7 +131,9 @@ function Transactions() {
       </Button>
 
       {accounts.length === 0 ? (
-        <Alert variant="info">No accounts found. Please create an account first.</Alert>
+        <Alert variant="info">
+          No accounts found. Please create an account first.
+        </Alert>
       ) : (
         <Table striped bordered hover responsive>
           <thead>
@@ -119,12 +144,20 @@ function Transactions() {
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {accounts.map(acc => (
+            {accounts.map((acc) => (
               <tr key={acc.account_number}>
                 <td>{acc.account_number}</td>
-                <td>{acc.account_holder_name}</td>
-                <td>${acc.account_balance?.toFixed(2)}</td>
+
+                <td>
+                  {acc.account_holder_name}
+                </td>
+
+                <td>
+                  ${acc.account_balance?.toFixed(2)}
+                </td>
+
                 <td>
                   <Button
                     variant="success"
@@ -136,11 +169,13 @@ function Transactions() {
                         transaction_type: 'DEPOSIT',
                         amount: '',
                       });
+
                       setShowModal(true);
                     }}
                   >
                     Deposit
                   </Button>
+
                   <Button
                     variant="warning"
                     size="sm"
@@ -150,6 +185,7 @@ function Transactions() {
                         transaction_type: 'WITHDRAWAL',
                         amount: '',
                       });
+
                       setShowModal(true);
                     }}
                   >
@@ -162,16 +198,26 @@ function Transactions() {
         </Table>
       )}
 
-      <Modal show={showModal} onHide={handleCloseModal}>
+      <Modal
+        show={showModal}
+        onHide={handleCloseModal}
+      >
         <Modal.Header closeButton>
           <Modal.Title>
-            {formData.transaction_type === 'DEPOSIT' ? '💰 Deposit Money' : '💸 Withdraw Money'}
+            {formData.transaction_type === 'DEPOSIT'
+              ? '💰 Deposit Money'
+              : '💸 Withdraw Money'}
           </Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
+
             <Form.Group className="mb-3">
-              <Form.Label>Account</Form.Label>
+              <Form.Label>
+                Account
+              </Form.Label>
+
               <Form.Select
                 name="account_number"
                 value={formData.account_number}
@@ -179,16 +225,27 @@ function Transactions() {
                 required
                 disabled
               >
-                <option value="">Select Account</option>
-                {accounts.map(acc => (
-                  <option key={acc.account_number} value={acc.account_number}>
-                    {acc.account_number} - {acc.account_holder_name}
+                <option value="">
+                  Select Account
+                </option>
+
+                {accounts.map((acc) => (
+                  <option
+                    key={acc.account_number}
+                    value={acc.account_number}
+                  >
+                    {acc.account_number} -{' '}
+                    {acc.account_holder_name}
                   </option>
                 ))}
               </Form.Select>
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Amount</Form.Label>
+              <Form.Label>
+                Amount
+              </Form.Label>
+
               <Form.Control
                 type="number"
                 step="0.01"
@@ -199,9 +256,17 @@ function Transactions() {
                 required
               />
             </Form.Group>
-            <Button variant="primary" type="submit" className="w-100">
-              {formData.transaction_type === 'DEPOSIT' ? 'Deposit' : 'Withdraw'}
+
+            <Button
+              variant="primary"
+              type="submit"
+              className="w-100"
+            >
+              {formData.transaction_type === 'DEPOSIT'
+                ? 'Deposit'
+                : 'Withdraw'}
             </Button>
+
           </Form>
         </Modal.Body>
       </Modal>
@@ -210,3 +275,4 @@ function Transactions() {
 }
 
 export default Transactions;
+
