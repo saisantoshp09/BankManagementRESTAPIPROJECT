@@ -1,0 +1,31 @@
+.home-container {
+  max-width: 1200px;
+}
+
+.feature-card {
+  border: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.feature-card .card-title {
+  color: #003366;
+  font-weight: 600;
+}
+
+.card {
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.card ul {
+  margin-bottom: 0;
+}
+
+.card li {
+  margin-bottom: 0.5rem;
+}

@@ -31,3 +31,28 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### AWS & Environment ###
+.elasticbeanstalk/
+.eb/
+.ebignore
+.env
+.env.local
+aws_credentials.txt
+application-dev.properties
+application-local.properties
+*.log
+
+### Docker ###
+.dockerignore
+
+### Frontend (React) ###
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
